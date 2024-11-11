@@ -1,0 +1,19 @@
+---
+title: "HW5 - mm6410"
+author: "Mahdi Maktabi"
+date: "2024-11-11"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Homework 5
+
+### Question 1
+
+```{r}
+
+```
+
