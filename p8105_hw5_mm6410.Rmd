@@ -144,9 +144,12 @@ After importing the raw data, we see that there are:
 
 * 52,179 observations and 12 variables (uid, reported_date, victim_last, victim_first, victim_race, victim_age, victim_sex, city, state, lat, lon, disposition)
 
+Now I will start manipulating the dataset.
+
+This first step will add a `city_state` column and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides
+
 ```{r}
-homicides_df =
-  homicides_df |> 
+homicides_df |> 
   mutate(
     city_state = str_c(city, state, sep = ", ")) |> 
   group_by(city_state) |> 
@@ -155,4 +158,83 @@ homicides_df =
     unsol_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
   )
 ```
+
+I will now run a `prop.test` for the city of Balitmore, MD.
+
+```{r}
+baltimore_test = homicides_df |> 
+  mutate(
+    city_state = str_c(city, state, sep = ", ")) |> 
+  group_by(city_state) |> 
+  filter(city_state == "Baltimore, MD") |> 
+  summarize(
+    total_homicides = n(),
+    unsol_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
+
+baltimore_prop_test = 
+  prop.test(
+    x = baltimore_test$unsol_homicides,
+    n = baltimore_test$total_homicides) |> 
+  broom::tidy() |> 
+  select(estimate, conf.low, conf.high)
+```
+
+
+Since this works, I will now repeat `prop.test` for the remaining cities in my dataset.
+
+```{r}
+city_prop_test = function(city_state) {
+  
+
+  
+  city_data = homicides_df |> 
+    mutate(city_state = str_c(city, state, sep = ", ")) |> 
+    group_by(city_state) |> 
+    filter(city_state == !!city_state) |> 
+    summarize(
+      total_homicides = n(),
+      unsol_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest")))
+  
+  
+  prop_test_result = 
+    prop.test(
+      x = city_data$unsol_homicides,
+      n = city_data$total_homicides) |> 
+    broom::tidy() |> 
+    select(estimate, conf.low, conf.high)
+  
+  return(prop_test_result)
+  
+
+}
+```
+
+Now that my function is defined, I can use `map` for each city in our dataset.
+
+```{r}
+city_results = homicides_df |> 
+  mutate(city_state = str_c(city, state, sep = ", ")) |> 
+  distinct(city_state) |> 
+  mutate(
+    prop_test_res = map(city_state, city_prop_test)) |> 
+  unnest(prop_test_res)
+
+city_results
+```
+
+I will now plot these estimates and CIs for each city as well as organize them according to the proportion of unsolved homicides.
+
+```{r}
+city_results |> 
+  arrange(estimate) |>
+  mutate(city_state = factor(city_state, levels = city_state)) |>
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
 
