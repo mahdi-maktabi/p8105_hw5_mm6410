@@ -116,6 +116,23 @@ sim_results_df |>
 This figure shows that as you increase $\mu$, power increases. Increasing $\mu$ from 1 to 3 has the largest effect on power.
 
 ```{r}
-
+average_res_df =
+  sim_results_df |> 
+    group_by(mu) |> 
+    summarize(
+      avg_mu = mean(mu_hat),
+      avg_mu_rej = mean(mu_hat[p_value < 0.05])
+    ) |> 
+  ggplot(aes(x = mu)) +
+  geom_point(aes(y = avg_mu)) +
+  geom_line(aes(y = avg_mu)) +
+  geom_point(aes(y = avg_mu_rej, color = "red")) +
+  geom_line(aes(y = avg_mu_rej, color = "red"))
 ```
+
+
+This figure shows that the sample average of $\hat{\mu}$ across tests for which the null is rejected is approximately equal to $\mu$ as it approaches 6. When $\mu$ is low, $\hat{\mu}$ is not the same but will slowly approach the $\mu$ curve.
+
+
+## Problem 3
 
