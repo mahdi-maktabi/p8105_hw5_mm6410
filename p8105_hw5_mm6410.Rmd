@@ -116,8 +116,7 @@ sim_results_df |>
 This figure shows that as you increase $\mu$, power increases. Increasing $\mu$ from 1 to 3 has the largest effect on power.
 
 ```{r}
-average_res_df =
-  sim_results_df |> 
+sim_results_df |> 
     group_by(mu) |> 
     summarize(
       avg_mu = mean(mu_hat),
@@ -135,4 +134,25 @@ This figure shows that the sample average of $\hat{\mu}$ across tests for which 
 
 
 ## Problem 3
+
+```{r}
+homicides_df =
+  read_csv(file = "./data/homicide-data.csv")
+```
+
+After importing the raw data, we see that there are: 
+
+* 52,179 observations and 12 variables (uid, reported_date, victim_last, victim_first, victim_race, victim_age, victim_sex, city, state, lat, lon, disposition)
+
+```{r}
+homicides_df =
+  homicides_df |> 
+  mutate(
+    city_state = str_c(city, state, sep = ", ")) |> 
+  group_by(city_state) |> 
+  summarize(
+    total_homicides = n(),
+    unsol_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
+```
 
